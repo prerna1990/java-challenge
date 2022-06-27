@@ -3,6 +3,8 @@ package jp.co.axa.apidemo.controllers;
 import jp.co.axa.apidemo.entities.Employee;
 import jp.co.axa.apidemo.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,11 +16,13 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
-    public void setEmployeeService(EmployeeService employeeService) {
-        this.employeeService = employeeService;
-    }
+	// display list of employees
+	@GetMapping("/")
+	public String viewHomePage(Model model) {
+		return findPaginated(1, "name", "asc", model);
+	}
 
-    @GetMapping("/employees")
+	@GetMapping("/employees")
     public List<Employee> getEmployees() {
         List<Employee> employees = employeeService.retrieveEmployees();
         return employees;
@@ -50,5 +54,27 @@ public class EmployeeController {
         }
 
     }
+
+	@GetMapping("/page/{pageNo}")
+	public String findPaginated(@PathVariable (value = "pageNo") int pageNo,
+		@RequestParam("sortField") String sortField,
+		@RequestParam("sortDir") String sortDir,
+		Model model) {
+		int pageSize = 5;
+
+		Page<Employee> page = employeeService.findPaginated(pageNo, pageSize, sortField, sortDir);
+		List<Employee> listEmployees = page.getContent();
+
+		model.addAttribute("currentPage", pageNo);
+		model.addAttribute("totalPages", page.getTotalPages());
+		model.addAttribute("totalItems", page.getTotalElements());
+
+		model.addAttribute("sortField", sortField);
+		model.addAttribute("sortDir", sortDir);
+		model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+
+		model.addAttribute("listEmployees", listEmployees);
+		return "index";
+	}
 
 }
