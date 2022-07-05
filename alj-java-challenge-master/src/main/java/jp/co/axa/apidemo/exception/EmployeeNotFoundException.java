@@ -1,8 +1,8 @@
 package jp.co.axa.apidemo.exception;
 
-public class EmployeeNotFoundException extends RuntimeException {
+public class EmployeeNotFoundException extends BaseException {
 
-	public EmployeeNotFoundException(Long id) {
-		super("Could not find employee " + id);
+	public EmployeeNotFoundException(String message, String errorCode) {
+		super(message, errorCode);
 	}
 }

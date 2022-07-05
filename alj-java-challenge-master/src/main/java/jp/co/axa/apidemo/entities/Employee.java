@@ -1,5 +1,6 @@
 package jp.co.axa.apidemo.entities;
 
+import java.io.Serializable;
 import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -13,12 +14,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "EMPLOYEE")
+//@Table(name = "EMPLOYEE")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class Employee {
+public class Employee implements Serializable {
+
+	private static final long serialVersionUID = -4439114469417994311L;
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
