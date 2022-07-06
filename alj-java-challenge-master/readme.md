@@ -47,10 +47,13 @@ Application (with the embedded H2 database) is ready to be used ! You can access
 ### Enhancement done by me
 - Added code in Java 8 wherever possible.
 - Added Exception advice and application ready state check.
+  - I have added some error code by default to pass for exception.
 - Separated the Employee request and Domain , so that in Future UI and backend changes should not affect with each other.
 - Removed all unnecessary setters even though Autowired was present.
 - Removed all extra variables and declarations
 - Added logger statements as much possible.
+- Added pagination and sorting while retrieving the employee List.
+  - By default page size is 10 but could be configurable.
 - Added Redis cache and Basic Authentication to use the API .
 - Used all possible Spring Boot annotations to enhance the readability of the code.
 - For /PUT call, as it's an EMPLOYEE update , so It could be done in two ways.
@@ -65,14 +68,19 @@ Application (with the embedded H2 database) is ready to be used ! You can access
     - All the /get end points have VIEWER role whereas PUT/DELETE/POST have "EDITOR".
 
 
-### Future scope
+### Future scope (if time permits)
 - Take out all the configs and keep in Spring cloud like security,Redis, etc..
 - API security can be enhanced by using Oauth2 or any token mechanism instead of Basic auth.
-- Advanced Redis implementations.
-- 
+- Customized Key-value map Redis implementations.
+- Pagination could be improved at next level like for below cases.
+  - http://localhost:8080/employees?pageSize=5&pageNo=1&sortBy=name
+  - http://localhost:8080/employees?pageSize=5&pageNo=2
+  - and so on..
+- can be add actuator for health check monitoring
 #### Your experience in Java
 
 Please let us know more about your Java experience in a few sentences. For example:
 
-- I have 7 years experience in Java and started to use Spring Boot and Java 8 for 3.5 years.
+- I have 7 years experience in Java and started to use Java 8 for 3.5 years.
+- I have 7 years experience in Spring framework and started to use Spring Boot for 4 years.
 

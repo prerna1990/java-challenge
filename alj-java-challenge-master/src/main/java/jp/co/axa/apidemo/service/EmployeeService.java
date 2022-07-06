@@ -1,5 +1,6 @@
 package jp.co.axa.apidemo.service;
 
+import java.util.Map;
 import java.util.Optional;
 import jp.co.axa.apidemo.dtos.EmployeeDto;
 import jp.co.axa.apidemo.entities.Employee;
@@ -17,5 +18,4 @@ public interface EmployeeService {
     public void deleteEmployee(Long employeeId);
 
     public Employee updateEmployee(Employee employee, Long employeeId);
-
 }

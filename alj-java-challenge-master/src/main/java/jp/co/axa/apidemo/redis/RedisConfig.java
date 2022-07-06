@@ -3,6 +3,7 @@ package jp.co.axa.apidemo.redis;
 
 import java.io.Serializable;
 import javax.annotation.PostConstruct;
+import jp.co.axa.apidemo.entities.Employee;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -33,15 +34,19 @@ public class RedisConfig {
 	@Value("${spring.redis.port}")
 	private int redisPort;
 
+	//Creating Connection with Redis
 	@Bean
-	public RedisTemplate<String, Serializable> redisCacheTemplate(LettuceConnectionFactory redisConnectionFactory) {
-		RedisTemplate<String, Serializable> template = new RedisTemplate<>();
-		template.setKeySerializer(new StringRedisSerializer());
-		template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-		template.setConnectionFactory(redisConnectionFactory);
-		return template;
+	public RedisConnectionFactory redisConnectionFactory() {
+		return new LettuceConnectionFactory();
 	}
 
+	//Creating RedisTemplate for Entity 'Employee'
+	@Bean
+	public RedisTemplate<String, Employee> redisTemplate(){
+		RedisTemplate<String, Employee> empTemplate = new RedisTemplate<>();
+		empTemplate.setConnectionFactory(redisConnectionFactory());
+		return empTemplate;
+	}
 	@Bean
 	public CacheManager cacheManager(RedisConnectionFactory factory) {
 		RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig();
