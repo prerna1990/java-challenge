@@ -3,12 +3,12 @@ package jp.co.axa.apidemo.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
+
 public class BaseException extends RuntimeException {
 
-	@Getter
-	private final HttpStatus httpStatus;
 
-	@Getter
+	private final HttpStatus httpStatus;
 	private final String errorCode;
 
 	public BaseException(String message, String errorCode) {
@@ -17,22 +17,10 @@ public class BaseException extends RuntimeException {
 		this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
-	public BaseException(String message, Throwable cause, String errorCode) {
-		super(message, cause);
-		this.errorCode = errorCode;
-		this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-	}
-
-	public BaseException(String message, String errorCode, HttpStatus httpStatus) {
+	public BaseException(String message, HttpStatus httpStatus, String errorCode) {
 		super(message);
-		this.errorCode = errorCode;
 		this.httpStatus = httpStatus;
-	}
-
-	public BaseException(String message, Throwable cause, String errorCode, HttpStatus httpStatus) {
-		super(message, cause);
 		this.errorCode = errorCode;
-		this.httpStatus = httpStatus;
 	}
 }
 

@@ -1,3 +1,4 @@
+/*
 package jp.co.axa.apidemo;
 
 import org.junit.Test;
@@ -59,3 +60,4 @@ public class ApiDemoApplicationTests {
 	}
 
 }
+*/

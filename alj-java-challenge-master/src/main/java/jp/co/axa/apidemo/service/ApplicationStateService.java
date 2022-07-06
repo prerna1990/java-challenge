@@ -30,14 +30,6 @@ public class ApplicationStateService {
 		log.info("READY");
 	}
 
-	public void prepareForTermination() throws InterruptedException {
-		// Simulate termination tasks...
-		ready = false;
-		log.info("Shutting down...");
-		Thread.sleep(terminateWaitTime);
-		log.info("TERMINATING");
-	}
-
 }
 
 

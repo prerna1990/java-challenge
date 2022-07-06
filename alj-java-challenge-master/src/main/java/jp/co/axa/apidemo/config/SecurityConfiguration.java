@@ -9,14 +9,20 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
+	public static final String VIEWER = "VIEWER";
+	public static final String EDITOR = "EDITOR";
+	public static final String API_V_1_EMPLOYEES = "/api/v1/employees";
+	public static final String API_V_1_EMPLOYEES1 = "/api/v1/employees/**";
+
 	// Create 2 users for demo
+	//All this config can be moved to Spring cloud
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 
 		auth.inMemoryAuthentication()
-			.withUser("User").password("{noop}read_password").roles("VIEWER")
+			.withUser("User").password("{noop}read_password").roles(VIEWER)
 			.and()
-			.withUser("Admin").password("{noop}editor_password").roles("VIEWER", "EDITOR”");
+			.withUser("Admin").password("{noop}editor_password").roles(VIEWER, EDITOR);
 
 	}
 
@@ -29,16 +35,14 @@ class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 			.and()
 			.authorizeRequests()
-			.antMatchers(HttpMethod.GET,"/api/v1/employees").hasRole(("VIEWER"))
-			//.antMatchers(HttpMethod.GET, "/employees/**").hasRole("USER")
-			//.antMatchers(HttpMethod.POST, "/api/v1/employees").hasRole("ROLE_EDITOR")
-			//.antMatchers(HttpMethod.PUT, "/employees/**").hasRole("ADMIN")
-			//.antMatchers(HttpMethod.PATCH, "/employees/**").hasRole("ADMIN")
-			//.antMatchers(HttpMethod.DELETE, "/employees/**").hasRole("ADMIN")
+			.antMatchers(HttpMethod.GET, API_V_1_EMPLOYEES).hasRole(VIEWER)
+			.antMatchers(HttpMethod.GET, API_V_1_EMPLOYEES1).hasRole(VIEWER)
+			.antMatchers(HttpMethod.POST, API_V_1_EMPLOYEES).hasRole(EDITOR)
+			.antMatchers(HttpMethod.PUT, API_V_1_EMPLOYEES1).hasRole(EDITOR)
+			.antMatchers(HttpMethod.DELETE, API_V_1_EMPLOYEES1).hasRole(EDITOR)
 			.and()
 			.csrf().disable()
 			.headers().frameOptions().disable();
-			//.formLogin().disable();
 	}
 
 }

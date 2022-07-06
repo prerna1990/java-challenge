@@ -2,12 +2,16 @@ package jp.co.axa.apidemo.controllers;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
+import jp.co.axa.apidemo.common.ErrorCodes;
 import jp.co.axa.apidemo.dtos.EmployeeDto;
 import jp.co.axa.apidemo.entities.Employee;
+import jp.co.axa.apidemo.exception.ServiceNotReadyException;
 import jp.co.axa.apidemo.service.ApplicationStateService;
 import jp.co.axa.apidemo.service.EmployeeService;
+import lombok.Generated;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -32,24 +37,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmployeeController {
 
 	@Autowired
-	private CacheManager cacheManager;
-
-	@Autowired
-    private EmployeeService employeeService;
+	private EmployeeService employeeService;
 
 	@Autowired
 	private ApplicationStateService applicationStateService;
 
+	private final ModelMapper modelMapper = new ModelMapper();
+
+
 	@PreAuthorize("hasRole('VIEWER')")
 	@GetMapping("/employees")
-	public List<EmployeeDto> retrieveEmployeesList() {
+	public ResponseEntity<List<Employee>> retrieveEmployeesList() {
+		if (!applicationStateService.isReady()) {
+			throw new ServiceNotReadyException("The service is not in a ready state", ErrorCodes.EPGW0003);
+		}
 		log.info("Generated message employee request received for all employees:");
-		return employeeService.getAllEmployees();
+		return new ResponseEntity<>(employeeService.getAllEmployees(), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasRole('VIEWER')")
 	@GetMapping("/employees/{employeeId}")
-	public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable(name = "employeeId") Long employeeId) {
+	public ResponseEntity<Employee> getEmployeeById(@PathVariable(name = "employeeId") Long employeeId) {
 		log.info("Generated message employee request received for: {}", employeeId);
 		return employeeService.getEmployee(employeeId)
 			.map(ResponseEntity::ok)
@@ -58,9 +66,8 @@ public class EmployeeController {
 
 	@PreAuthorize("hasRole('EDITOR')")
 	@PostMapping("/employees")
-	@ResponseStatus(HttpStatus.CREATED)
-	public Employee createEmployee(EmployeeDto employee) { //List of employees.
-		return employeeService.saveEmployee(employee);
+	public Employee createEmployee(@RequestBody EmployeeDto employeeDto) {
+		return employeeService.saveEmployee(modelMapper.map(employeeDto, Employee.class));
 
 	}
 
@@ -73,14 +80,12 @@ public class EmployeeController {
 
 	@PreAuthorize("hasRole('EDITOR')")
 	@PutMapping("/employees/{employeeId}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public ResponseEntity<Employee> saveOrUpdateEmployee(@RequestBody EmployeeDto employee,
+	public ResponseEntity<Employee> saveOrUpdateEmployee(@RequestBody EmployeeDto employeeDto,
 		@PathVariable(name = "employeeId") Long employeeId) {
-		log.info("Generated message employee before updation: {}", employee);
-		return new ResponseEntity<>(employeeService.updateEmployee(employee, employeeId), HttpStatus.OK);
+		log.info("Generated message employee before updation: {}", employeeDto);
+		return new ResponseEntity<>(employeeService.updateEmployee(modelMapper.map(employeeDto, Employee.class), employeeId), HttpStatus.OK);
 
 	}
-
 
 	@PostConstruct
 	public void postConstruct(){
@@ -88,14 +93,6 @@ public class EmployeeController {
 			applicationStateService.prepareReadyState();
 		} catch (InterruptedException e) {
 			log.error("EXCEPTION: ", e);
-		}
-	}
-
-	// clear all cache using cache manager
-	@RequestMapping(value = "clearCache")
-	public void clearCache(){
-		for(String name:cacheManager.getCacheNames()){
-			cacheManager.getCache(name).clear();
 		}
 	}
 

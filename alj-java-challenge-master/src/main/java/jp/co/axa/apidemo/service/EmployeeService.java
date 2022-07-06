@@ -8,14 +8,14 @@ import java.util.List;
 
 public interface EmployeeService {
 
-    public List<EmployeeDto> getAllEmployees();
+    public List<Employee> getAllEmployees();
 
-    public Optional<EmployeeDto> getEmployee(Long employeeId);
+    public Optional<Employee> getEmployee(Long employeeId);
 
-    public Employee saveEmployee(EmployeeDto employeeDto);
+    public Employee saveEmployee(Employee employee);
 
     public void deleteEmployee(Long employeeId);
 
-    public Employee updateEmployee(EmployeeDto employeeDto, Long employeeId);
+    public Employee updateEmployee(Employee employee, Long employeeId);
 
 }

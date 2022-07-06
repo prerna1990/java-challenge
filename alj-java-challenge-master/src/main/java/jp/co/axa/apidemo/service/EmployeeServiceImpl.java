@@ -5,24 +5,29 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import javax.transaction.Transactional;
-import jp.co.axa.apidemo.common.EmployeeMapper;
 import jp.co.axa.apidemo.common.ErrorCodes;
-import jp.co.axa.apidemo.dtos.EmployeeDto;
 import jp.co.axa.apidemo.entities.Employee;
 import jp.co.axa.apidemo.exception.EmployeeNotFoundException;
 import jp.co.axa.apidemo.repositories.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "Employee")
 public class EmployeeServiceImpl implements EmployeeService {
 
 	private static final String LOG_PREFIX = "Employee Request for update record: {} ";
@@ -30,67 +35,79 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Autowired
 	private EmployeeRepository employeeRepository;
-	@Autowired
-	private EmployeeMapper employeeMapper;
+
+	@Value("10")
+	private int pageSize;
+
+	@Value("0")
+	private int page;
 
 	@Override
 	@Cacheable(value = "Employee")         // it will cache result and key name will be "Employee"
-	public List<EmployeeDto> getAllEmployees() {
+	public List<Employee> getAllEmployees() {
 		log.info("----Getting employee data from database.----");
-		return employeeMapper.toDto(employeeRepository.findAll());
-
+		Pageable pageable = PageRequest.of(page, pageSize, Sort.by("name"));
+		Page<Employee> page = employeeRepository.findAll(pageable);
+		return page.getContent();
 	}
 
 	@Override
 	@Cacheable(value = "Employee", key = "#employeeId")
-	public Optional<EmployeeDto> getEmployee(Long employeeId) {
-		Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0001 + "_" + employeeId.toString()));
-		return Optional.ofNullable(employeeMapper.toDto(employee));
+	public Optional<Employee> getEmployee(Long employeeId) {
+		return Optional.ofNullable(employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0001)));
 	}
 
 	@Override
 	@CacheEvict(value = "Employee", allEntries = true)  // It will clear cache when new Employee save to database
-	public Employee saveEmployee(EmployeeDto employeeDTO) {
-		return employeeRepository.save(employeeMapper.toEntity(employeeDTO));
+	public Employee saveEmployee(Employee employee) {
+		return employeeRepository.save(employee);
 	}
 
+	@Transactional
+	@Modifying
 	@Override
 	@CacheEvict(value = "Employee", key = "#employeeId")
-	// @CacheEvict(value="Invoice", allEntries=true) //in case there are multiple entires to delete
+	// @CacheEvict(value="Employee", allEntries=true) //in case there are multiple entires to delete
 	public void deleteEmployee(Long employeeId) {
 		log.info("Generated message employee before deletion: {}", employeeId);
 		Employee employee = employeeRepository.findById(employeeId)
-			.orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0002 + "_" + employeeId.toString()));
-		employeeRepository.deleteById(employee.getId());
+			.orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0002));
+		employeeRepository.deleteById(employee.getEmployeeId());
 	}
 
 	@Transactional
 	@Modifying
 	@Override
 	@CachePut(value = "Employee", key = "#employeeId")
-	public Employee updateEmployee(EmployeeDto employeeDto, Long employeeId) {
-
+	@CacheEvict(value="Employee", allEntries=true)
+	public Employee updateEmployee(Employee newEmployee, Long employeeId) {
 		try {
-			log.info(LOG_PREFIX, objectMapper.writeValueAsString(employeeDto));
+			log.info(LOG_PREFIX, objectMapper.writeValueAsString(newEmployee));
 		} catch (JsonProcessingException e) {
-			log.error(LOG_PREFIX, employeeDto);
+			log.error(LOG_PREFIX, newEmployee);
 		}
 
-		employeeRepository.findById(employeeId)
-			.map(employee1 -> employeeRepository.save(employeeMapper.toEntity(employeeDto)))
-			.orElseGet(() -> {
-				Employee employee = employeeMapper.toEntity(employeeDto);
-				employee.setId(employeeId);
-				employeeRepository.save(employee);
-				return employee;
-			});
-		/*Approach
+		return employeeRepository.findById(employeeId)
+			.map(employee -> Employee.builder().employeeId(employeeId).name(newEmployee.getName()).salary(newEmployee.getSalary()).department(newEmployee.getDepartment()).build())
+			.map(employee -> employeeRepository.save(employee))
+			.orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0001)); // Approach 2
+			/*.orElseGet(() -> { // Uncomment if want to follow approach 1
+			newEmployee.setEmployeeId(employeeId);
+			return employeeRepository.save(newEmployee);
+		});*/
+		/*Approach 1
 		 If employeeId exist
 			then update the records.
 		 else
-			 create new record , here other approach could be throw the exception*/
+			 create new record
+		Approach 2
+		 If employeeId exist
+			then update the records.
+		 else
+			 throw the exception
+		 */
 
-		return null;
 	}
+
 }
 
