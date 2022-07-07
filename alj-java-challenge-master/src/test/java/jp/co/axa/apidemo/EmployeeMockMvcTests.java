@@ -1,12 +1,16 @@
 
 package jp.co.axa.apidemo;
 
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -23,12 +27,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -54,11 +57,50 @@ public class EmployeeMockMvcTests {
 
 	@Test
 	public void testGetEmployeeOK() throws Exception {
-
 		mockMvc.perform(get("/api/v1/employees")
 				.with(user("User").password("read_password").roles("VIEWER"))
 				.accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk());
+	}
+
+	@Test
+	public void testGetEmployeeUnauthorized() throws Exception {
+
+		mockMvc.perform(get("/api/v1/employees")
+				.with(user("User").password("dummy").roles("ADMIN"))
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().is4xxClientError());
+	}
+
+	@Test
+	public void testEmployeeUpdateOK() throws Exception {
+
+		when(employeeRepository.save(any(Employee.class))).thenReturn(new Employee());
+		String patchInJson = "{ \n"
+							 + "   \"department\": \"MS\",\n"
+							 + "   \"name\": \"Sonu\", \n"
+							 + "   \"salary\": 12345\n"
+							 + " }";
+		mockMvc.perform(put("/api/v1/employees/1")
+				.with(user("Admin").password("edit_password").roles("EDITOR"))
+				.content(patchInJson)
+				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk());
+
+		verify(employeeRepository, times(1)).findById(1L);
+		verify(employeeRepository, times(1)).save(any(Employee.class));
+
+	}
+
+	@Test
+	public void testDeleteInventory() throws Exception {
+
+		doNothing().when(employeeRepository).deleteById(1L);
+		mockMvc.perform(delete("/api/v1/employees/1")
+				.with(user("Admin").password("edit_password").roles("EDITOR")))
+			.andExpect(status().isOk());
+		verify(employeeRepository, times(1)).deleteById(1L);
 	}
 
 
