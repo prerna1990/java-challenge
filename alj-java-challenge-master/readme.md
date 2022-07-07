@@ -71,7 +71,7 @@ Application (with the embedded H2 database) is ready to be used ! You can access
 ### Future scope (if time permits)
 - Take out all the configs and keep in Spring cloud like security,Redis, etc..
 - API security can be enhanced by using Oauth2 or any token mechanism instead of Basic auth.
-- Customized Key-value map Redis implementations.
+- Customized Key-value map Redis implementations and change the repository as Redis repo.
 - Pagination could be improved at next level like for below cases.
   - http://localhost:8080/employees?pageSize=5&pageNo=1&sortBy=name
   - http://localhost:8080/employees?pageSize=5&pageNo=2
