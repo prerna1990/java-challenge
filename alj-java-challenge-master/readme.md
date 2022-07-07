@@ -76,11 +76,13 @@ Application (with the embedded H2 database) is ready to be used ! You can access
   - http://localhost:8080/employees?pageSize=5&pageNo=1&sortBy=name
   - http://localhost:8080/employees?pageSize=5&pageNo=2
   - and so on..
-- can be add actuator for health check monitoring
+- can be added actuator for health check monitoring
+- More Test coverage
+
 #### Your experience in Java
 
 Please let us know more about your Java experience in a few sentences. For example:
 
-- I have 7 years experience in Java and started to use Java 8 for 3.5 years.
-- I have 7 years experience in Spring framework and started to use Spring Boot for 4 years.
+- I have 7 years experience in Java and started to use Java 8 and Spring Boot for 3.5 years.
+
 
