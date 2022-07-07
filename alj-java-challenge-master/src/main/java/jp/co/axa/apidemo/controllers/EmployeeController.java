@@ -48,7 +48,7 @@ public class EmployeeController {
 	@PreAuthorize("hasRole('VIEWER')")
 	@GetMapping("/employees")
 	public ResponseEntity<List<Employee>> retrieveEmployeesList() {
-		if (!applicationStateService.isReady()) {
+		if (!applicationStateService.isReady()) { // This is to check intially if service is up or not, before getting entire employee list from  DB
 			throw new ServiceNotReadyException("The service is not in a ready state", ErrorCodes.EPGW0003);
 		}
 		log.info("Generated message employee request received for all employees:");

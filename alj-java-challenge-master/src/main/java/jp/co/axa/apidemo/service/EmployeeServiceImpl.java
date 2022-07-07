@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 public class EmployeeServiceImpl implements EmployeeService {
 
 	private static final String LOG_PREFIX = "Employee Request for update record: {} ";
+	public static final String NOT_FIND_THE_EMPLOYEE = "Could not find the employee";
 	private final ObjectMapper objectMapper;
 
 	@Autowired
@@ -47,14 +48,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public List<Employee> getAllEmployees() {
 		log.info("----Getting employee data from database.----");
 		Pageable pageable = PageRequest.of(page, pageSize, Sort.by("name"));
-		Page<Employee> page = employeeRepository.findAll(pageable);
-		return page.getContent();
+		return employeeRepository.findAll(pageable).getContent();
 	}
 
 	@Override
 	@Cacheable(value = "Employee", key = "#employeeId")
 	public Optional<Employee> getEmployee(Long employeeId) {
-		return Optional.ofNullable(employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0001)));
+		return Optional.ofNullable(employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeNotFoundException(NOT_FIND_THE_EMPLOYEE, ErrorCodes.EPGW0001)));
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public void deleteEmployee(Long employeeId) {
 		log.info("Generated message employee before deletion: {}", employeeId);
 		Employee employee = employeeRepository.findById(employeeId)
-			.orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0002));
+			.orElseThrow(() -> new EmployeeNotFoundException(NOT_FIND_THE_EMPLOYEE, ErrorCodes.EPGW0002));
 		employeeRepository.deleteById(employee.getEmployeeId());
 	}
 
@@ -90,7 +90,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 		return employeeRepository.findById(employeeId)
 			.map(employee -> Employee.builder().employeeId(employeeId).name(newEmployee.getName()).salary(newEmployee.getSalary()).department(newEmployee.getDepartment()).build())
 			.map(employee -> employeeRepository.save(employee))
-			.orElseThrow(() -> new EmployeeNotFoundException("Could not find the employee", ErrorCodes.EPGW0001)); // Approach 2
+			.orElseThrow(() -> new EmployeeNotFoundException(NOT_FIND_THE_EMPLOYEE, ErrorCodes.EPGW0001)); // Approach 2
 			/*.orElseGet(() -> { // Uncomment if want to follow approach 1
 			newEmployee.setEmployeeId(employeeId);
 			return employeeRepository.save(newEmployee);
